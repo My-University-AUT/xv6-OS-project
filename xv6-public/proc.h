@@ -51,7 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   // NEW CODE
-  int readCount                //Holds a counter for the number of times that read systemcall  
+  int readCount;               //Holds a counter for the number of times that read systemcall  
                                //has been called by this process after booting kernel
 
 };
