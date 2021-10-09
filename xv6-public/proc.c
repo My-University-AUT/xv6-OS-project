@@ -573,4 +573,17 @@ int getProcCount(void)
 
 int getReadCount(void)
 {
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  int read_cnt = 0;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    // if(p->readCount> 0){
+    read_cnt += p->readCount;
+    cprintf("process id: %d --- process count: %d\n", p->pid, p->readCount);
+  }
+  release(&ptable.lock);
+
+  return read_cnt;
 }
