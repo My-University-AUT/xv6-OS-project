@@ -671,9 +671,11 @@ int has_shared_pgdir(struct proc *proc)
   {
     if (proc != p && proc->pgdir == p->pgdir)
     {
+      cprintf("=========shitttttttttttttttttt\n");
       return 1;
     }
   }
+  cprintf("shitttttttttttttttttt\n");
   return 0;
 }
 
@@ -751,7 +753,7 @@ int thread_wait(void)
     {
       if (p->parent != curproc) // means that proc is not child of curr_proc. so continue...
         continue;
-      if (p->threads >= 0) // if p->threads 'is greather than -1' means that child is 'process child' and we should NOT wait for him
+      if (p->threads != -1) // if p->threads 'is greather than -1' means that child is 'process child' and we should NOT wait for him
         continue;
       // if code reaches this line means curr_proc has 'thread child'
       havekids = 1;
@@ -776,12 +778,13 @@ int thread_wait(void)
         return pid;
       }
     }
-
     // No point waiting if we don't have any children.
     if (!havekids || curproc->killed)
     {
       release(&ptable.lock);
       return -1;
     }
+
+    sleep(curproc, &ptable.lock); // DOC: wait-sleep
   }
 }
