@@ -1,1 +1,2 @@
- docker run -v $(pwd)/xv6-public/:/home/a/XV6_Dev/ -i -t grantbot/xv6
+make clean -C "./xv6-public/";
+make -C "./xv6-public/" && make qemu-nox -C "./xv6-public/";
