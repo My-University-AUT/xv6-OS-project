@@ -152,7 +152,7 @@ void userinit(void)
   p->tf->ss = p->tf->ds;
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
-  p->topOfStack = PGSIZE;
+  // p->topOfStack = PGSIZE;
   p->tf->eip = 0; // beginning of initcode.S
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
@@ -687,7 +687,6 @@ int thread_create(void *stack)
   struct proc *new_proc;
   // allocate memory to new process
   new_proc = allocproc();
-  cprintf("hello 2\n");
   if (new_proc == 0)
   {
     return -1;
@@ -705,32 +704,18 @@ int thread_create(void *stack)
   // topOfStack minus stackPointer gives us the amount of bytes that occupied by curr_proc stack
   int stackBytes = curr_proc->topOfStack - curr_proc->tf->esp;
 
-  // new_proc->tf->eax = 0;
-  // set the stack pointer to new process(virtually)
-  new_proc->tf->esp = new_proc->topOfStack - stackBytes;
-  // set base pointer for new process
-  // new_proc->tf->ebp = new_proc->topOfStack - (curr_proc->topOfStack - curr_proc->tf->ebp);
-
-  cprintf("-----------------------\n");
-  cprintf("sizeBytes is %d\n", stackBytes);
-  // cprintf("sp is %d\n", new_proc);
-  cprintf("top of stack is %d\n", new_proc->topOfStack);
-  cprintf("stack is %d\n", stack);
-  cprintf("stack pointer is %d\n", curr_proc->tf->esp);
-  // copy the stack content from curr_proc to new_proc as much as stackBytes
-  memmove((void *)new_proc->tf->esp, (void *)curr_proc->tf->esp, stackBytes);
-  cprintf("size issss %d\n", stackBytes);
-
-  new_proc->parent = curr_proc;
-
   *new_proc->tf = *curr_proc->tf;
-  cprintf("hello 3\n");
 
   new_proc->tf->eax = 0;
   // set the stack pointer to new process(virtually)
   new_proc->tf->esp = new_proc->topOfStack - stackBytes;
   // set base pointer for new process
   new_proc->tf->ebp = new_proc->topOfStack - (curr_proc->topOfStack - curr_proc->tf->ebp);
+
+  // copy the stack content from curr_proc to new_proc as much as stackBytes
+  memmove((void *)new_proc->tf->esp, (void *)curr_proc->tf->esp, stackBytes);
+
+  new_proc->parent = curr_proc;
 
   int i = 0;
   for (i = 0; i < NOFILE; i++)
@@ -740,18 +725,14 @@ int thread_create(void *stack)
       new_proc->ofile[i] = filedup(curr_proc->ofile[i]);
     }
   }
-  cprintf("hello 33\n");
   new_proc->cwd = idup(curr_proc->cwd);
 
-  cprintf("hello 44\n");
   safestrcpy(new_proc->name, curr_proc->name, sizeof(curr_proc->name));
   pid = new_proc->pid;
 
-  cprintf("hello 4\n");
   acquire(&ptable.lock);
   new_proc->state = RUNNABLE;
   release(&ptable.lock);
-  cprintf("hello 4\n");
 
   return pid;
 }
