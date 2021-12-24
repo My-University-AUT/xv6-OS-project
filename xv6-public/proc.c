@@ -7,11 +7,15 @@
 #include "proc.h"
 #include "spinlock.h"
 
+// #define PS 4096 // page size
+
 struct
 {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
+
+struct spinlock thread_lock;
 
 static struct proc *initproc;
 
@@ -24,6 +28,7 @@ static void wakeup1(void *chan);
 void pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  initlock(&thread_lock, "thlock");
 }
 
 // Must be called with interrupts disabled
@@ -67,11 +72,11 @@ myproc(void)
   return p;
 }
 
-//PAGEBREAK: 32
-// Look in the process table for an UNUSED proc.
-// If found, change state to EMBRYO and initialize
-// state required to run in the kernel.
-// Otherwise return 0.
+// PAGEBREAK: 32
+//  Look in the process table for an UNUSED proc.
+//  If found, change state to EMBRYO and initialize
+//  state required to run in the kernel.
+//  Otherwise return 0.
 static struct proc *
 allocproc(void)
 {
@@ -91,8 +96,13 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   // NEW CODE
-  //assgin readCount to 0 because this is the time that process get allocated
+  // assgin readCount to 0 because this is the time that process get allocated
   p->readCount = 0;
+
+  // NEW CODE
+  // -1 means process have no threads at first
+  p->threads = -1;
+  p->topOfStack = -1;
 
   release(&ptable.lock);
 
@@ -121,8 +131,8 @@ found:
   return p;
 }
 
-//PAGEBREAK: 32
-// Set up first user process.
+// PAGEBREAK: 32
+//  Set up first user process.
 void userinit(void)
 {
   struct proc *p;
@@ -142,6 +152,7 @@ void userinit(void)
   p->tf->ss = p->tf->ds;
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
+  p->topOfStack = PGSIZE;
   p->tf->eip = 0; // beginning of initcode.S
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
@@ -165,18 +176,75 @@ int growproc(int n)
   uint sz;
   struct proc *curproc = myproc();
 
+  acquire(&thread_lock);
   sz = curproc->sz;
   if (n > 0)
   {
     if ((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+    {
+      release(&thread_lock);
       return -1;
+    }
   }
   else if (n < 0)
   {
     if ((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
+    {
+      release(&thread_lock);
       return -1;
+    }
   }
   curproc->sz = sz;
+
+  acquire(&ptable.lock);
+  struct proc *p;
+  int numOfChildren;
+  if (curproc->threads == -1)
+  {
+    curproc->parent->sz = sz;
+    numOfChildren = curproc->parent->threads - 2;
+    if (numOfChildren <= 0)
+    {
+      release(&ptable.lock);
+      release(&thread_lock);
+      switchuvm(curproc);
+      return 0;
+    }
+    // update sibling of process
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p != curproc && p->parent == curproc->parent && p->threads == -1)
+      {
+        p->sz = sz;
+        numOfChildren--;
+      }
+    }
+  }
+  else
+  {
+    numOfChildren = curproc->threads - 1;
+    if (numOfChildren <= 0)
+    {
+      release(&ptable.lock);
+      release(&thread_lock);
+      switchuvm(curproc);
+      return 0;
+    }
+    else
+    {
+      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+      {
+        if (p->parent == curproc && p->threads == -1)
+        {
+          p->sz = sz;
+          numOfChildren--;
+        }
+      }
+    }
+  }
+
+  release(&ptable.lock);
+  release(&thread_lock);
   switchuvm(curproc);
   return 0;
 }
@@ -204,6 +272,8 @@ int fork(void)
     np->state = UNUSED;
     return -1;
   }
+  (np->threads)++;
+  np->topOfStack = curproc->topOfStack;
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
@@ -295,6 +365,9 @@ int wait(void)
     {
       if (p->parent != curproc)
         continue;
+      // NEW CODE ADDED
+      if (p->threads < 0) // if p->threads is less than zero means that child is 'thread child' and we should NOT wait for him
+        continue;
       havekids = 1;
       if (p->state == ZOMBIE)
       {
@@ -308,6 +381,8 @@ int wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        p->threads = -1;
+        p->topOfStack = -1;
         release(&ptable.lock);
         return pid;
       }
@@ -321,18 +396,18 @@ int wait(void)
     }
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-    sleep(curproc, &ptable.lock); //DOC: wait-sleep
+    sleep(curproc, &ptable.lock); // DOC: wait-sleep
   }
 }
 
-//PAGEBREAK: 42
-// Per-CPU process scheduler.
-// Each CPU calls scheduler() after setting itself up.
-// Scheduler never returns.  It loops, doing:
-//  - choose a process to run
-//  - swtch to start running that process
-//  - eventually that process transfers control
-//      via swtch back to the scheduler.
+// PAGEBREAK: 42
+//  Per-CPU process scheduler.
+//  Each CPU calls scheduler() after setting itself up.
+//  Scheduler never returns.  It loops, doing:
+//   - choose a process to run
+//   - swtch to start running that process
+//   - eventually that process transfers control
+//       via swtch back to the scheduler.
 void scheduler(void)
 {
   struct proc *p;
@@ -397,7 +472,7 @@ void sched(void)
 // Give up the CPU for one scheduling round.
 void yield(void)
 {
-  acquire(&ptable.lock); //DOC: yieldlock
+  acquire(&ptable.lock); // DOC: yieldlock
   myproc()->state = RUNNABLE;
   sched();
   release(&ptable.lock);
@@ -443,8 +518,8 @@ void sleep(void *chan, struct spinlock *lk)
   // (wakeup runs with ptable.lock locked),
   // so it's okay to release lk.
   if (lk != &ptable.lock)
-  {                        //DOC: sleeplock0
-    acquire(&ptable.lock); //DOC: sleeplock1
+  {                        // DOC: sleeplock0
+    acquire(&ptable.lock); // DOC: sleeplock1
     release(lk);
   }
   // Go to sleep.
@@ -458,15 +533,15 @@ void sleep(void *chan, struct spinlock *lk)
 
   // Reacquire original lock.
   if (lk != &ptable.lock)
-  { //DOC: sleeplock2
+  { // DOC: sleeplock2
     release(&ptable.lock);
     acquire(lk);
   }
 }
 
-//PAGEBREAK!
-// Wake up all processes sleeping on chan.
-// The ptable lock must be held.
+// PAGEBREAK!
+//  Wake up all processes sleeping on chan.
+//  The ptable lock must be held.
 static void
 wakeup1(void *chan)
 {
@@ -509,10 +584,10 @@ int kill(int pid)
   return -1;
 }
 
-//PAGEBREAK: 36
-// Print a process listing to console.  For debugging.
-// Runs when user types ^P on console.
-// No lock to avoid wedging a stuck machine further.
+// PAGEBREAK: 36
+//  Print a process listing to console.  For debugging.
+//  Runs when user types ^P on console.
+//  No lock to avoid wedging a stuck machine further.
 void procdump(void)
 {
   static char *states[] = {
@@ -586,4 +661,146 @@ int getReadCount(void)
   release(&ptable.lock);
 
   return read_cnt;
+}
+
+int has_shared_pgdir(struct proc *proc)
+{
+  // TODO
+  struct proc *p;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (proc != p && proc->pgdir == p->pgdir)
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int thread_create(void *stack)
+{
+  cprintf("hello 1\n");
+  int pid;
+
+  struct proc *curr_proc = myproc();
+
+  struct proc *new_proc;
+  // allocate memory to new process
+  new_proc = allocproc();
+  cprintf("hello 2\n");
+  if (new_proc == 0)
+  {
+    return -1;
+  }
+
+  (curr_proc->threads)++;
+
+  new_proc->topOfStack = (int)((char *)stack + PGSIZE);
+
+  acquire(&ptable.lock);
+  new_proc->pgdir = curr_proc->pgdir;
+  new_proc->sz = curr_proc->sz;
+  release(&ptable.lock);
+
+  // topOfStack minus stackPointer gives us the amount of bytes that occupied by curr_proc stack
+  int stackBytes = curr_proc->topOfStack - curr_proc->tf->esp;
+
+  // new_proc->tf->eax = 0;
+  // set the stack pointer to new process(virtually)
+  new_proc->tf->esp = new_proc->topOfStack - stackBytes;
+  // set base pointer for new process
+  // new_proc->tf->ebp = new_proc->topOfStack - (curr_proc->topOfStack - curr_proc->tf->ebp);
+
+  cprintf("-----------------------\n");
+  cprintf("sizeBytes is %d\n", stackBytes);
+  // cprintf("sp is %d\n", new_proc);
+  cprintf("top of stack is %d\n", new_proc->topOfStack);
+  cprintf("stack is %d\n", stack);
+  cprintf("stack pointer is %d\n", curr_proc->tf->esp);
+  // copy the stack content from curr_proc to new_proc as much as stackBytes
+  memmove((void *)new_proc->tf->esp, (void *)curr_proc->tf->esp, stackBytes);
+  cprintf("size issss %d\n", stackBytes);
+
+  new_proc->parent = curr_proc;
+
+  *new_proc->tf = *curr_proc->tf;
+  cprintf("hello 3\n");
+
+  new_proc->tf->eax = 0;
+  // set the stack pointer to new process(virtually)
+  new_proc->tf->esp = new_proc->topOfStack - stackBytes;
+  // set base pointer for new process
+  new_proc->tf->ebp = new_proc->topOfStack - (curr_proc->topOfStack - curr_proc->tf->ebp);
+
+  int i = 0;
+  for (i = 0; i < NOFILE; i++)
+  {
+    if (curr_proc->ofile)
+    {
+      new_proc->ofile[i] = filedup(curr_proc->ofile[i]);
+    }
+  }
+  cprintf("hello 33\n");
+  new_proc->cwd = idup(curr_proc->cwd);
+
+  cprintf("hello 44\n");
+  safestrcpy(new_proc->name, curr_proc->name, sizeof(curr_proc->name));
+  pid = new_proc->pid;
+
+  cprintf("hello 4\n");
+  acquire(&ptable.lock);
+  new_proc->state = RUNNABLE;
+  release(&ptable.lock);
+  cprintf("hello 4\n");
+
+  return pid;
+}
+
+int thread_wait(void)
+{
+  struct proc *curproc = myproc();
+  struct proc *p;
+  int havekids, pid;
+
+  acquire(&ptable.lock);
+  for (;;)
+  {
+    havekids = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p->parent != curproc) // means that proc is not child of curr_proc. so continue...
+        continue;
+      if (p->threads >= 0) // if p->threads 'is greather than -1' means that child is 'process child' and we should NOT wait for him
+        continue;
+      // if code reaches this line means curr_proc has 'thread child'
+      havekids = 1;
+      if (p->state == ZOMBIE)
+      {
+
+        if (!has_shared_pgdir(p))
+        {
+          freevm(p->pgdir);
+        }
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        p->threads = -1;
+        p->topOfStack = -1;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if (!havekids || curproc->killed)
+    {
+      release(&ptable.lock);
+      return -1;
+    }
+  }
 }

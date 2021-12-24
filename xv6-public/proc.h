@@ -53,6 +53,9 @@ struct proc {
   // NEW CODE
   int readCount;               //Holds a counter for the number of times that read systemcall  
                                //has been called by this process after booting kernel
+  int threads;                 // number of threads that this process has. -1 means process has no child(as thread)!
+
+  int topOfStack;
 
 };
 
