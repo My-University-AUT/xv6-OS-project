@@ -671,11 +671,9 @@ int has_shared_pgdir(struct proc *proc)
   {
     if (proc != p && proc->pgdir == p->pgdir)
     {
-      cprintf("=========shitttttttttttttttttt\n");
       return 1;
     }
   }
-  cprintf("shitttttttttttttttttt\n");
   return 0;
 }
 

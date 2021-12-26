@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
             x++;
             printf(1, "x is %d\n", x);
             sleep(100);
-            if(x==10){
+            if(x>=10){
                 exit();
             }
         }
@@ -39,9 +39,9 @@ int main(int argc, char *argv[])
         //     sleep(100);
         // }
 
-        printf(1,"wait for child thread to reachs to x=10\n");
+        printf(1,"wait for child thread to reach x=10\n");
         thread_wait();
-        printf(1,"after ending the child thread, x is %d", x);
+        printf(1,"after ending the child thread, x is %d\n", x);
     }
     exit();
 }
