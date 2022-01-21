@@ -839,3 +839,20 @@ int thread_wait(void)
     sleep(curproc, &ptable.lock); // DOC: wait-sleep
   }
 }
+
+int setPriority(int priority) 
+{
+  int current_priority = priority;
+  struct proc * current_p = myproc();
+
+  if (priority < 1 || priority > 6)
+    current_priority = 5;
+  
+  acquire(&ptable.lock);
+
+  current_p->priority = current_priority;
+
+  release(&ptable.lock);
+
+  return 0;
+}
