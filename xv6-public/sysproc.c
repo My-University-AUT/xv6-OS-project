@@ -117,3 +117,14 @@ int sys_thread_wait(void)
 {
   return thread_wait();
 }
+
+// set the scheduling policy.
+int sys_setSchedulerPolicy(void)
+{
+   int policy;
+  
+  if(argint(0,&policy) < 0){
+    return -1;
+  }
+  return setSchedulerPolicy((void *)policy);
+}

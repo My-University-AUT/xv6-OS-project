@@ -46,3 +46,5 @@ int atoi(const char*);
 int thread_create(void *stack);
 int thread_wait(void);
 int thread_creator(void (*fn)(void *), void *args);
+
+int setSchedulerPolicy(void *policy);

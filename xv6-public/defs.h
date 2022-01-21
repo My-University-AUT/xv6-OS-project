@@ -129,6 +129,9 @@ int             thread_create(void *stack);
 int             thread_wait(void);
 int             thread_creator(void (*fn)(void *), void *args);
 
+// PHASE 3
+int             setSchedulerPolicy(void *policy);
+
 // swtch.S
 void            swtch(struct context**, struct context*);
 

@@ -28,3 +28,6 @@
 #define SYS_getReadCount 24
 #define SYS_thread_create 25
 #define SYS_thread_wait 26
+
+// PHASE 3
+#define SYS_setSchedulerPolicy 27

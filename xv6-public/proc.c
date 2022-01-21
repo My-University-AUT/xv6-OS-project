@@ -786,3 +786,20 @@ int thread_wait(void)
     sleep(curproc, &ptable.lock); // DOC: wait-sleep
   }
 }
+
+int setSchedulerPolicy(void *policy)
+{
+  cprintf("default scheduler policy: %d\n", schedulerPolicy);
+  if (*((int *)policy) >= 0 && *((int *)policy) <= 2)
+  {
+    schedulerPolicy = *((int *)policy);
+    cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
+    return 0;
+  }
+  else
+  {
+    schedulerPolicy = 0;
+    cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
+    return -1;
+  }
+}

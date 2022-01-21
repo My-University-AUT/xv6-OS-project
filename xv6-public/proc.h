@@ -15,6 +15,9 @@ struct cpu {
 extern struct cpu cpus[NCPU];
 extern int ncpu;
 
+uint schedulerPolicy;
+extern uint schedulerPolicy; // no need to extern i think!
+
 //PAGEBREAK: 17
 // Saved registers for kernel context switches.
 // Don't need to save all the segment registers (%cs, etc),
