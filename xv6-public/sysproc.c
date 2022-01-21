@@ -126,3 +126,14 @@ int sys_setPriority(void)
 
   return setPriority(priority);
 }
+
+// set the scheduling policy.
+int sys_setSchedulerPolicy(void)
+{
+   int policy;
+  
+  if(argint(0,&policy) < 0){
+    return -1;
+  }
+  return setSchedulerPolicy((void *)policy);
+}

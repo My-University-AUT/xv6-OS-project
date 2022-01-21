@@ -186,6 +186,7 @@ UPROGS=\
 	_getReadCountTest\
 	_threadTest_1\
 	_cls\
+	_setSchedulerPolicy\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -263,6 +264,7 @@ EXTRA=\
 	getReadCountTest.c\
 	threadTest_1.c\
 	cls.c\
+	setSchedulerPolicy.c\
 
 dist:
 	rm -rf dist

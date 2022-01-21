@@ -856,3 +856,41 @@ int setPriority(int priority)
 
   return 0;
 }
+
+void printPolicy()
+{
+  if (schedulerPolicy == RR)
+  {
+    cprintf("policy is round robin (RR)\n");
+  }
+  else if (schedulerPolicy == NPPS)
+  {
+    cprintf("policy is non preemptive priority scheduling (NPPS)\n");
+  }
+  else if (schedulerPolicy == PMLQ)
+  {
+    cprintf("policy is preemptive multi level queue (PMLQ)\n");
+  }
+  else if (schedulerPolicy == DMLQ)
+  {
+    cprintf("policy is dynamic multi level queue (DMLQ)\n");
+  }
+}
+
+int setSchedulerPolicy(void *policy)
+{
+  cprintf("default scheduler policy: %d\n", schedulerPolicy);
+  if (*((int *)policy) >= 0 && *((int *)policy) <= 3)
+  {
+    schedulerPolicy = *((int *)policy);
+    cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
+    printPolicy();
+    return 0;
+  }
+  else
+  {
+    schedulerPolicy = 0;
+    cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
+    return -1;
+  }
+}

@@ -15,6 +15,15 @@ struct cpu {
 extern struct cpu cpus[NCPU];
 extern int ncpu;
 
+// Round robin (RR)
+// non preemptive priority scheduling (NPPS)
+// preemptive multi level queue (PMLQ)
+// dynamic multi level queue (DMLQ)
+enum policies {RR, NPPS, PMLQ, DMLQ};
+enum policies schedulerPolicy ;
+
+
+
 //PAGEBREAK: 17
 // Saved registers for kernel context switches.
 // Don't need to save all the segment registers (%cs, etc),
