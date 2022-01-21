@@ -426,6 +426,26 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
+      if (schedulerPolicy == RR)
+      {
+        int i = 0;
+        for (; i < QUANTUM; i++)
+        {
+          if (p->state != RUNNABLE)
+            break;
+
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
+
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
+
+          c->proc = 0;
+        }
+        continue;
+      }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
@@ -787,13 +807,34 @@ int thread_wait(void)
   }
 }
 
+void printPolicy()
+{
+  if (schedulerPolicy == RR)
+  {
+    cprintf("policy is round robin (RR)\n");
+  }
+  else if (schedulerPolicy == NPPS)
+  {
+    cprintf("policy is non preemptive priority scheduling (NPPS)\n");
+  }
+  else if (schedulerPolicy == PMLQ)
+  {
+    cprintf("policy is preemptive multi level queue (PMLQ)\n");
+  }
+  else if (schedulerPolicy == DMLQ)
+  {
+    cprintf("policy is dynamic multi level queue (DMLQ)\n");
+  }
+}
+
 int setSchedulerPolicy(void *policy)
 {
   cprintf("default scheduler policy: %d\n", schedulerPolicy);
-  if (*((int *)policy) >= 0 && *((int *)policy) <= 2)
+  if (*((int *)policy) >= 0 && *((int *)policy) <= 3)
   {
     schedulerPolicy = *((int *)policy);
     cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
+    printPolicy();
     return 0;
   }
   else
