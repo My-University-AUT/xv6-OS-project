@@ -8,6 +8,8 @@ struct cpu {
   int ncli;                    // Depth of pushcli nesting.
   int intena;                  // Were interrupts enabled before pushcli?
   struct proc *proc;           // The process running on this cpu or null
+
+  uint policy;
 };
 
 extern struct cpu cpus[NCPU];
@@ -57,6 +59,13 @@ struct proc {
 
   int topOfStack;
 
+  uint priority;
+
+  uint creationTime;
+  uint sleepingTime;
+  uint runningTime;
+  uint readyTime;
+  uint terminationTime;
 };
 
 // Process memory is laid out contiguously, low addresses first:
