@@ -425,76 +425,79 @@ int wait(void)
   }
 }
 
-
 // PHASE 3
 
+int waitWithPData(void *pdata)
+{
+  struct pData *data = (struct pData *)pdata;
+  // struct pData *pdata = (struct pData *)data;
+  // cprintf("value of ready time: %d\n", data->readyTime);
+  // cprintf("value of running time: %d\n", data->runningTime);
+  // cprintf("value of sleeping time: %d\n", data->sleepingTime);
+  // cprintf("value of pid: %d\n", data->pid);
+  // cprintf("========================================\n");
 
- 
-// this wait prints its child's time.
-// prints running time, sleeping time & ready time of its 
-// child when the child state is ZOMBIE(done its work)
-// int waitWithPData(struct pData *pdata)
-// {
-//   // struct pData *pdata = (struct pData *)data;
-//   cprintf("value of ready time: %d\n", pdata->readyTime);
-//   cprintf("========================================\n");
+  struct proc *p;
+  int havekids, pid;
+  struct proc *curproc = myproc();
 
-//   struct proc *p;
-//   int havekids, pid;
-//   struct proc *curproc = myproc();
+  acquire(&ptable.lock);
+  for (;;)
+  {
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p->parent != curproc)
+        continue;
+      // NEW CODE ADDED
+      if (p->threads < 0) // if p->threads is less than zero means that child is 'thread child' and we should NOT wait for him
+        continue;
+      havekids = 1;
+      if (p->state == ZOMBIE)
+      {
+        // Found one.
 
-//   acquire(&ptable.lock);
-//   for (;;)
-//   {
-//     // Scan through table looking for exited children.
-//     havekids = 0;
-//     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-//     {
-//       if (p->parent != curproc)
-//         continue;
-//       // NEW CODE ADDED
-//       if (p->threads < 0) // if p->threads is less than zero means that child is 'thread child' and we should NOT wait for him
-//         continue;
-//       havekids = 1;
-//       if (p->state == ZOMBIE)
-//       {
-//         // printProcessTime(p);
-//         // Found one.
-//         pid = p->pid;
-//         kfree(p->kstack);
-//         p->kstack = 0;
-//         freevm(p->pgdir);
-//         p->pid = 0;
-//         p->parent = 0;
-//         p->name[0] = 0;
-//         p->killed = 0;
-//         p->state = UNUSED;
-//         p->threads = -1;
-//         p->topOfStack = -1;
+        data->runningTime = p->runningTime;
+        data->sleepingTime = p->sleepingTime;
+        data->readyTime = p->readyTime;
+        data->pid = p->pid;
+        
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        p->threads = -1;
+        p->topOfStack = -1;
 
-//         // PHASE 3:
-//         p->readyTime = 0;
-//         p->runningTime = 0;
-//         p->creationTime = 0;
-//         p->sleepingTime = 0;
-//         p->terminationTime = 0;
+        // PHASE 3:
+        p->readyTime = 0;
+        p->runningTime = 0;
+        p->creationTime = 0;
+        p->sleepingTime = 0;
+        p->terminationTime = 0;
 
-//         release(&ptable.lock);
-//         return pid;
-//       }
-//     }
+        release(&ptable.lock);
+        return pid;
+      }
+    }
 
-//     // No point waiting if we don't have any children.
-//     if (!havekids || curproc->killed)
-//     {
-//       release(&ptable.lock);
-//       return -1;
-//     }
+    // No point waiting if we don't have any children.
+    if (!havekids || curproc->killed)
+    {
+      release(&ptable.lock);
+      return -1;
+    }
 
-//     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-//     sleep(curproc, &ptable.lock); // DOC: wait-sleep
-//   }
-// }
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock); // DOC: wait-sleep
+  }
+}
 
 // PAGEBREAK: 42
 //  Per-CPU process scheduler.
@@ -1027,16 +1030,18 @@ void updateProccessTime()
 void doSomeDummyWork(int lineNum)
 {
   struct proc *curproc = myproc();
-
+  
   acquire(&printProcessTime_lock);
   cprintf("/PID = %d/ : /priority = %d/ : /state = %d/\n", curproc->pid, curproc->priority, curproc->state);
   release(&printProcessTime_lock);
+  
+  int pid = curproc->pid;
   int i;
   for (i = 1; i < lineNum; i++)
   {
-    acquire(&printProcessTime_lock);
-    cprintf("/PID = %d/ : /i = %d/\n", curproc->pid, i);
-    release(&printProcessTime_lock);
+    // acquire(&printProcessTime_lock);
+    cprintf("/PID = %d/ : /i = %d/\n", pid, i);
+    // release(&printProcessTime_lock);
   }
 }
 
