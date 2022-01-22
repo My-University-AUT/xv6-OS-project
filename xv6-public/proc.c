@@ -556,7 +556,7 @@ void scheduler(void)
         if (!hasMaxPriority)
           continue;
 
-        cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
+        // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
 
         for (;;)
         {
@@ -1024,7 +1024,7 @@ void updateProccessTime()
   release(&ptable.lock);
 }
 
-void doSomeDummyWork(void)
+void doSomeDummyWork(int lineNum)
 {
   struct proc *curproc = myproc();
 
@@ -1032,7 +1032,7 @@ void doSomeDummyWork(void)
   cprintf("/PID = %d/ : /priority = %d/ : /state = %d/\n", curproc->pid, curproc->priority, curproc->state);
   release(&printProcessTime_lock);
   int i;
-  for (i = 1; i < 1000; i++)
+  for (i = 1; i < lineNum; i++)
   {
     acquire(&printProcessTime_lock);
     cprintf("/PID = %d/ : /i = %d/\n", curproc->pid, i);

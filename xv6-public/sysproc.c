@@ -143,7 +143,12 @@ int sys_printProcessTime(void){
 }
 int sys_doSomeDummyWork(void)
 {
-  doSomeDummyWork();
+  int lineNum;
+  if(argint(0,&lineNum) < 0){
+    return -1;
+  }
+
+  doSomeDummyWork(lineNum);
   return 0;
 }
 

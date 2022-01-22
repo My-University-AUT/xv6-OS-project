@@ -24,6 +24,12 @@ int main(int argc, char *argv[])
     // data->readyTime = 1;
     // printf(1, "after settign: %d\n", data->readyTime);
 
+    // set Scheduler Policy to Round-Robin Scheduling
+    int *policy = (int *)malloc(sizeof(int *));
+    *policy = 0;
+    printf(1,"policy is %d\n", *policy);
+    setSchedulerPolicy((void *)policy);
+
     int parent_pid = getpid();
     int i;
     for (i = 0; i < num_of_children; i++)
@@ -36,7 +42,7 @@ int main(int argc, char *argv[])
     // // sleep(5);
     int pid = getpid();
 
-    doSomeDummyWork();
+    doSomeDummyWork(1000);
 
     if (pid == parent_pid)
     {

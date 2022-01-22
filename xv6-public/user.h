@@ -52,7 +52,7 @@ int setPriority(int priority);
 // PHASE 3
 int setSchedulerPolicy(void *policy);
 void printProcessTime(void);
-void doSomeDummyWork(void);
+void doSomeDummyWork(int lineNum);
 // int waitWithPData(struct pData *pdata);
 
 // process data

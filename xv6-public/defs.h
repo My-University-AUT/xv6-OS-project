@@ -134,7 +134,7 @@ int             setSchedulerPolicy(void *policy);
 int             setPriority(int priority);
 void            updateProccessTime();
 void            printProcessTime();
-void            doSomeDummyWork();
+void            doSomeDummyWork(int lineNum);
 
 // process data
 // struct pData {
