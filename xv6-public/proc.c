@@ -1031,8 +1031,8 @@ void doSomeDummyWork(void)
   acquire(&printProcessTime_lock);
   cprintf("/PID = %d/ : /priority = %d/ : /state = %d/\n", curproc->pid, curproc->priority, curproc->state);
   release(&printProcessTime_lock);
-
-  for (int i = 1; i < 1000; i++)
+  int i;
+  for (i = 1; i < 1000; i++)
   {
     acquire(&printProcessTime_lock);
     cprintf("/PID = %d/ : /i = %d/\n", curproc->pid, i);
