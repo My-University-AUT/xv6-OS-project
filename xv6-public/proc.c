@@ -556,7 +556,7 @@ void scheduler(void)
         if (!hasMaxPriority)
           continue;
 
-        cprintf("the priority of current process is (%d) and (%d)\n", p->priority, hasMaxPriority);
+        cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
 
         for (;;)
         {
