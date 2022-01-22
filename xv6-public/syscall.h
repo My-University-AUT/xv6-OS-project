@@ -31,3 +31,4 @@
 
 // PHASE 3
 #define SYS_setSchedulerPolicy 27
+#define SYS_printProcessTime 29

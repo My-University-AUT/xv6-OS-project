@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"remoteAuthority": "wsl+ubuntu-20.04",
+	"settings": {
+		"files.exclude": {
+			"**/*.o": true,
+			"**/*.d": true,
+			"**/*.asm": true,
+			"**/*.sym": true,
+			"**/_*": true,
+
+		},
+		"files.associations": {
+			"syscall.h": "c",
+			"mmu.h": "c",
+			"proc.h": "c",
+			"defs.h": "c",
+			"param.h": "c",
+			"x86.h": "c"
+		}
+	},
+}

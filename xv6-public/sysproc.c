@@ -128,3 +128,7 @@ int sys_setSchedulerPolicy(void)
   }
   return setSchedulerPolicy((void *)policy);
 }
+int sys_printProcessTime(void){
+  printProcessTime();
+  return 0;
+}

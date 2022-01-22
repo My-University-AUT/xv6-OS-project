@@ -113,6 +113,7 @@ extern int sys_thread_wait(void);
 
 // PHASE 3
 extern int sys_setSchedulerPolicy(void);
+extern int sys_printProcessTime(void);
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -142,6 +143,7 @@ static int (*syscalls[])(void) = {
     [SYS_thread_create] sys_thread_create,
     [SYS_thread_wait] sys_thread_wait,
     [SYS_setSchedulerPolicy] sys_setSchedulerPolicy,
+    [SYS_printProcessTime] sys_printProcessTime,
 };
 
 void syscall(void)

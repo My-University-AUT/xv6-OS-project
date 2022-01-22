@@ -48,3 +48,4 @@ int thread_wait(void);
 int thread_creator(void (*fn)(void *), void *args);
 
 int setSchedulerPolicy(void *policy);
+void printProcessTime(void);

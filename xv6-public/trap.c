@@ -51,6 +51,10 @@ trap(struct trapframe *tf)
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
+      // cprintf("ticks increased %d\n", ticks);
+      // PHASE 3
+      updateProccessTime();
+
       wakeup(&ticks);
       release(&tickslock);
     }

@@ -131,6 +131,8 @@ int             thread_creator(void (*fn)(void *), void *args);
 
 // PHASE 3
 int             setSchedulerPolicy(void *policy);
+void            updateProccessTime();
+void             printProcessTime();
 
 // swtch.S
 void            swtch(struct context**, struct context*);

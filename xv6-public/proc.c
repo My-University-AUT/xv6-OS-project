@@ -17,6 +17,8 @@ struct
 
 struct spinlock thread_lock;
 
+struct spinlock printProcessTime_lock;
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -29,6 +31,7 @@ void pinit(void)
 {
   initlock(&ptable.lock, "ptable");
   initlock(&thread_lock, "thlock");
+  initlock(&printProcessTime_lock, "proccessTimeLock");
 }
 
 // Must be called with interrupts disabled
@@ -103,6 +106,13 @@ found:
   // -1 means process have no threads at first
   p->threads = -1;
   p->topOfStack = -1;
+
+  // PHASE 3:
+  p->readyTime = 0;
+  p->runningTime = 0;
+  p->creationTime = 0;
+  p->sleepingTime = 0;
+  p->terminationTime = 0;
 
   release(&ptable.lock);
 
@@ -383,6 +393,14 @@ int wait(void)
         p->state = UNUSED;
         p->threads = -1;
         p->topOfStack = -1;
+
+        // PHASE 3:
+        p->readyTime = 0;
+        p->runningTime = 0;
+        p->creationTime = 0;
+        p->sleepingTime = 0;
+        p->terminationTime = 0;
+
         release(&ptable.lock);
         return pid;
       }
@@ -426,25 +444,25 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
-      if (schedulerPolicy == RR)
-      {
-        int i = 0;
-        for (; i < QUANTUM; i++)
-        {
-          if (p->state != RUNNABLE)
-            break;
+      // if (schedulerPolicy == RR)
+      // {
+      //   int i = 0;
+      //   for (; i < QUANTUM; i++)
+      //   {
+      //     if (p->state != RUNNABLE)
+      //       break;
 
-          c->proc = p;
-          switchuvm(p);
-          p->state = RUNNING;
+      //     c->proc = p;
+      //     switchuvm(p);
+      //     p->state = RUNNING;
 
-          swtch(&(c->scheduler), p->context);
-          switchkvm();
+      //     swtch(&(c->scheduler), p->context);
+      //     switchkvm();
 
-          c->proc = 0;
-        }
-        continue;
-      }
+      //     c->proc = 0;
+      //   }
+      //   continue;
+      // }
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -792,6 +810,14 @@ int thread_wait(void)
         p->state = UNUSED;
         p->threads = -1;
         p->topOfStack = -1;
+
+        // PHASE 3:
+        p->readyTime = 0;
+        p->runningTime = 0;
+        p->creationTime = 0;
+        p->sleepingTime = 0;
+        p->terminationTime = 0;
+
         release(&ptable.lock);
         return pid;
       }
@@ -843,4 +869,42 @@ int setSchedulerPolicy(void *policy)
     cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
     return -1;
   }
+}
+
+void updateProccessTime()
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    switch (p->state)
+    {
+    case RUNNING:
+      p->runningTime++;
+      break;
+    case RUNNABLE:
+      p->readyTime++;
+      break;
+    case SLEEPING:
+      p->sleepingTime++;
+      break;
+    default:
+      break;
+    }
+  }
+  release(&ptable.lock);
+}
+
+void printProcessTime(void)
+{
+  acquire(&printProcessTime_lock);
+  // PHASE 3
+  struct proc *curproc = myproc();
+
+  // cprintf("#### proccess: %d ######\n", curproc->pid);
+  cprintf("pid: %d -- ready time: %d\n", curproc->pid, curproc->readyTime);
+  cprintf("pid: %d -- running time: %d\n", curproc->pid, curproc->runningTime);
+  cprintf("pid: %d -- sleeping time: %d\n", curproc->pid, curproc->sleepingTime);
+  cprintf("########################\n");
+  release(&printProcessTime_lock);
 }
