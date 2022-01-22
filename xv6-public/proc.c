@@ -541,21 +541,53 @@ void scheduler(void)
           c->proc = 0;
         }
         continue;
+      } else if (schedulerPolicy == NPPS) {
+
+        struct proc * temp_p;
+        int hasMaxPriority = 1;
+        for (temp_p = ptable.proc; temp_p < &ptable.proc[NPROC]; temp_p++) {
+          
+          if (temp_p->state == RUNNABLE && temp_p->priority < p->priority) {
+            hasMaxPriority = 0;
+            break;
+          }
+        }
+
+        if (!hasMaxPriority)
+          continue;
+
+        cprintf("the priority of current process is (%d) and (%d)\n", p->priority, hasMaxPriority);
+
+        for (;;)
+        {
+          if (p->state != RUNNABLE)
+            break;
+
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
+
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
+
+          c->proc = 0;
+        }
+        continue;
       }
-      
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      // c->proc = p;
+      // switchuvm(p);
+      // p->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+      // swtch(&(c->scheduler), p->context);
+      // switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+      // // Process is done running for now.
+      // // It should have changed its p->state before coming back.
+      // c->proc = 0;
     }
 
     release(&ptable.lock);
@@ -996,7 +1028,11 @@ void doSomeDummyWork(void)
 {
   struct proc *curproc = myproc();
 
-  for (int i = 1; i < 100; i++)
+  acquire(&printProcessTime_lock);
+  cprintf("/PID = %d/ : /priority = %d/ : /state = %d/\n", curproc->pid, curproc->priority, curproc->state);
+  release(&printProcessTime_lock);
+
+  for (int i = 1; i < 1000; i++)
   {
     acquire(&printProcessTime_lock);
     cprintf("/PID = %d/ : /i = %d/\n", curproc->pid, i);
