@@ -51,6 +51,15 @@ int thread_creator(void (*fn)(void *), void *args);
 int setSchedulerPolicy(void *policy);
 void printProcessTime(void);
 void doSomeDummyWork(void);
-// int waitWithPData(struct pData *pdata);
+// struct pData
+// {
+//     int pid;
+//     uint readyTime;
+//     uint runningTime;
+//     uint sleepingTime;
+// };
+
+int waitWithPData(void *pdata);
+
 
 // process data

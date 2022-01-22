@@ -1,28 +1,30 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-// #include "spinlock.h"
 
-// #include "semaphore.h"
+// TODO: change to 10 after test
 #define num_of_children 10
-// struct spinlock lock;
 
 // // process data
-// struct pData
-// {
-//     int pid;
-//     uint readyTime;
-//     uint runningTime;
-//     uint sleepingTime;
-// };
+struct pData
+{
+    int pid;
+    uint readyTime;
+    uint runningTime;
+    uint sleepingTime;
+};
 
 int main(int argc, char *argv[])
 {
     // struct pData *data = malloc(sizeof(struct pData));
-    // initlock(&lock, "simple_lock");
     // printf(1, "before settign: %d\n", data->readyTime);
     // data->readyTime = 1;
+    // data->runningTime = 2;
+    // data->sleepingTime = 3;
+    // data->pid = 4;
     // printf(1, "after settign: %d\n", data->readyTime);
+
+    struct pData *pdata_arr = malloc(num_of_children * sizeof(struct pData));
 
     int parent_pid = getpid();
     for (int i = 0; i < num_of_children; i++)
@@ -41,14 +43,25 @@ int main(int argc, char *argv[])
     {
         for (int i = 0; i < num_of_children; i++)
         {
-            // waitWithPData(data);
+            // waitWithPData((void *)&pdata_arr[i]);
             wait();
         }
+
+        printf(1, "after all the children are done:\n");
+        for (int i = 0; i < num_of_children; i++)
+        {
+            printf(1, "========================================\n");
+            printf(1, "value of ready time: %d\n", pdata_arr[i].readyTime);
+            printf(1, "value of running time: %d\n", pdata_arr[i].runningTime);
+            printf(1, "value of sleeping time: %d\n", pdata_arr[i].sleepingTime);
+            printf(1, "value of pid: %d\n", pdata_arr[i].pid);
+        }
+
         exit();
     }
     else
     {
-        printProcessTime();
+        // printProcessTime();
         exit();
     }
 }

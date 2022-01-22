@@ -115,7 +115,7 @@ extern int sys_thread_wait(void);
 extern int sys_setSchedulerPolicy(void);
 extern int sys_printProcessTime(void);
 extern int sys_doSomeDummyWork(void);
-// extern int sys_waitWithPData(void);
+extern int sys_waitWithPData(void);
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -147,7 +147,7 @@ static int (*syscalls[])(void) = {
     [SYS_setSchedulerPolicy] sys_setSchedulerPolicy,
     [SYS_printProcessTime] sys_printProcessTime,
     [SYS_doSomeDummyWork] sys_doSomeDummyWork,
-    // [SYS_waitWithPData] sys_waitWithPData,
+    [SYS_waitWithPData] sys_waitWithPData,
 };
 
 void syscall(void)

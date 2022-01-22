@@ -136,15 +136,15 @@ void            printProcessTime();
 void            doSomeDummyWork();
 
 // process data
-// struct pData {
-//    int pid;
-//    uint readyTime;
-//    uint runningTime;
-//    uint sleepingTime;
-// };
+struct pData {
+   int pid;
+   uint readyTime;
+   uint runningTime;
+   uint sleepingTime;
+};
 
 // int waitWithPData(struct pData *pdata);
-
+int waitWithPData(void *pdata);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
