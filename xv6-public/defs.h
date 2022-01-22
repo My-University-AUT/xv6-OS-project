@@ -131,9 +131,10 @@ int             thread_creator(void (*fn)(void *), void *args);
 
 // PHASE 3
 int             setSchedulerPolicy(void *policy);
+int             setPriority(int priority);
 void            updateProccessTime();
 void            printProcessTime();
-void            doSomeDummyWork();
+void            doSomeDummyWork(int lineNum);
 
 // process data
 struct pData {

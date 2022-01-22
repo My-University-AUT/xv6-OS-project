@@ -119,6 +119,15 @@ int sys_thread_wait(void)
   return thread_wait();
 }
 
+int sys_setPriority(void)
+{
+  int priority;
+  if(argint(0, &priority) < 0)
+    return -1;
+
+  return setPriority(priority);
+}
+
 // set the scheduling policy.
 int sys_setSchedulerPolicy(void)
 {
@@ -137,7 +146,12 @@ int sys_printProcessTime(void)
 }
 int sys_doSomeDummyWork(void)
 {
-  doSomeDummyWork();
+  int lineNum;
+  if(argint(0,&lineNum) < 0){
+    return -1;
+  }
+
+  doSomeDummyWork(lineNum);
   return 0;
 }
 

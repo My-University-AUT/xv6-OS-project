@@ -106,6 +106,13 @@ found:
   // -1 means process have no threads at first
   p->threads = -1;
   p->topOfStack = -1;
+  p->priority = 3;
+
+  p->creationTime = ticks;
+  p->readyTime = 0;
+  p->runningTime = 0;
+  p->sleepingTime = 0;
+  p->terminationTime = 0;
 
   // PHASE 3:
   p->readyTime = 0;
@@ -513,16 +520,48 @@ void scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
       if (p->state != RUNNABLE)
         continue;
 
-      if (schedulerPolicy == RR)
-      {
+      if (schedulerPolicy == RR) {
         int i = 0;
         // for (;; i++)
         for (; i < QUANTUM; i++)
+        {
+          if (p->state != RUNNABLE)
+            break;
+
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
+
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
+
+          c->proc = 0;
+        }
+        continue;
+      } else if (schedulerPolicy == NPPS) {
+
+        struct proc * temp_p;
+        int hasMaxPriority = 1;
+        for (temp_p = ptable.proc; temp_p < &ptable.proc[NPROC]; temp_p++) {
+          
+          if (temp_p->state == RUNNABLE && temp_p->priority < p->priority) {
+            hasMaxPriority = 0;
+            break;
+          }
+        }
+
+        if (!hasMaxPriority)
+          continue;
+
+        // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
+
+        for (;;)
         {
           if (p->state != RUNNABLE)
             break;
@@ -542,17 +581,18 @@ void scheduler(void)
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      // c->proc = p;
+      // switchuvm(p);
+      // p->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+      // swtch(&(c->scheduler), p->context);
+      // switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+      // // Process is done running for now.
+      // // It should have changed its p->state before coming back.
+      // c->proc = 0;
     }
+
     release(&ptable.lock);
   }
 }
@@ -908,6 +948,23 @@ int thread_wait(void)
   }
 }
 
+int setPriority(int priority) 
+{
+  int current_priority = priority;
+  struct proc * current_p = myproc();
+
+  if (priority < 1 || priority > 6)
+    current_priority = 5;
+  
+  acquire(&ptable.lock);
+
+  current_p->priority = current_priority;
+
+  release(&ptable.lock);
+
+  return 0;
+}
+
 void printPolicy()
 {
   if (schedulerPolicy == RR)
@@ -970,12 +1027,17 @@ void updateProccessTime()
   release(&ptable.lock);
 }
 
-void doSomeDummyWork(void)
+void doSomeDummyWork(int lineNum)
 {
   struct proc *curproc = myproc();
+  
+  acquire(&printProcessTime_lock);
+  cprintf("/PID = %d/ : /priority = %d/ : /state = %d/\n", curproc->pid, curproc->priority, curproc->state);
+  release(&printProcessTime_lock);
+  
   int pid = curproc->pid;
   int i;
-  for (i = 1; i < 1000; i++)
+  for (i = 1; i < lineNum; i++)
   {
     // acquire(&printProcessTime_lock);
     cprintf("/PID = %d/ : /i = %d/\n", pid, i);

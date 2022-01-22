@@ -187,7 +187,9 @@ UPROGS=\
 	_threadTest_1\
 	_cls\
 	_setSchedulerPolicy\
+	_setPriority\
 	_RR_test\
+	_NPPS_test\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -266,7 +268,9 @@ EXTRA=\
 	threadTest_1.c\
 	cls.c\
 	setSchedulerPolicy.c\
+	setPriority.c\
 	RR_test.c\
+	NPPS_test.c\
 
 dist:
 	rm -rf dist

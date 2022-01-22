@@ -47,19 +47,13 @@ int thread_create(void *stack);
 int thread_wait(void);
 int thread_creator(void (*fn)(void *), void *args);
 
+int setSchedulerPolicy(void *policy);
+int setPriority(int priority);
 // PHASE 3
 int setSchedulerPolicy(void *policy);
 void printProcessTime(void);
-void doSomeDummyWork(void);
-// struct pData
-// {
-//     int pid;
-//     uint readyTime;
-//     uint runningTime;
-//     uint sleepingTime;
-// };
 
+void doSomeDummyWork(int lineNum);
 int waitWithPData(void *pdata);
-
 
 // process data
