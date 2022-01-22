@@ -418,6 +418,77 @@ int wait(void)
   }
 }
 
+
+// PHASE 3
+
+
+ 
+// this wait prints its child's time.
+// prints running time, sleeping time & ready time of its 
+// child when the child state is ZOMBIE(done its work)
+// int waitWithPData(struct pData *pdata)
+// {
+//   // struct pData *pdata = (struct pData *)data;
+//   cprintf("value of ready time: %d\n", pdata->readyTime);
+//   cprintf("========================================\n");
+
+//   struct proc *p;
+//   int havekids, pid;
+//   struct proc *curproc = myproc();
+
+//   acquire(&ptable.lock);
+//   for (;;)
+//   {
+//     // Scan through table looking for exited children.
+//     havekids = 0;
+//     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+//     {
+//       if (p->parent != curproc)
+//         continue;
+//       // NEW CODE ADDED
+//       if (p->threads < 0) // if p->threads is less than zero means that child is 'thread child' and we should NOT wait for him
+//         continue;
+//       havekids = 1;
+//       if (p->state == ZOMBIE)
+//       {
+//         // printProcessTime(p);
+//         // Found one.
+//         pid = p->pid;
+//         kfree(p->kstack);
+//         p->kstack = 0;
+//         freevm(p->pgdir);
+//         p->pid = 0;
+//         p->parent = 0;
+//         p->name[0] = 0;
+//         p->killed = 0;
+//         p->state = UNUSED;
+//         p->threads = -1;
+//         p->topOfStack = -1;
+
+//         // PHASE 3:
+//         p->readyTime = 0;
+//         p->runningTime = 0;
+//         p->creationTime = 0;
+//         p->sleepingTime = 0;
+//         p->terminationTime = 0;
+
+//         release(&ptable.lock);
+//         return pid;
+//       }
+//     }
+
+//     // No point waiting if we don't have any children.
+//     if (!havekids || curproc->killed)
+//     {
+//       release(&ptable.lock);
+//       return -1;
+//     }
+
+//     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+//     sleep(curproc, &ptable.lock); // DOC: wait-sleep
+//   }
+// }
+
 // PAGEBREAK: 42
 //  Per-CPU process scheduler.
 //  Each CPU calls scheduler() after setting itself up.
@@ -444,25 +515,26 @@ void scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
-      // if (schedulerPolicy == RR)
-      // {
-      //   int i = 0;
-      //   for (; i < QUANTUM; i++)
-      //   {
-      //     if (p->state != RUNNABLE)
-      //       break;
+      if (schedulerPolicy == RR)
+      {
+        int i = 0;
+        // for (;; i++)
+        for (; i < QUANTUM; i++)
+        {
+          if (p->state != RUNNABLE)
+            break;
 
-      //     c->proc = p;
-      //     switchuvm(p);
-      //     p->state = RUNNING;
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
 
-      //     swtch(&(c->scheduler), p->context);
-      //     switchkvm();
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
 
-      //     c->proc = 0;
-      //   }
-      //   continue;
-      // }
+          c->proc = 0;
+        }
+        continue;
+      }
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -893,6 +965,18 @@ void updateProccessTime()
     }
   }
   release(&ptable.lock);
+}
+
+void doSomeDummyWork(void)
+{
+  struct proc *curproc = myproc();
+
+  for (int i = 1; i < 100; i++)
+  {
+    acquire(&printProcessTime_lock);
+    cprintf("/PID = %d/ : /i = %d/\n", curproc->pid, i);
+    release(&printProcessTime_lock);
+  }
 }
 
 void printProcessTime(void)
