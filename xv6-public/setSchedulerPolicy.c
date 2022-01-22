@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
 
     *policy = atoi(argv[1]);
     printf(1,"policy is %d\n", *policy);
+    sleep(1000);
     setSchedulerPolicy((void *)policy);    
     exit();
 }

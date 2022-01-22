@@ -103,6 +103,13 @@ found:
   // -1 means process have no threads at first
   p->threads = -1;
   p->topOfStack = -1;
+  p->priority = 3;
+
+  p->creationTime = ticks;
+  p->readyTime = 0;
+  p->runningTime = 0;
+  p->sleepingTime = 0;
+  p->terminationTime = 0;
 
   release(&ptable.lock);
 
@@ -423,40 +430,55 @@ void scheduler(void)
     acquire(&ptable.lock);
 
     // Implement Non-Preemptive Priority Scheduling
-    if (c->policy == 2) { 
+    if (schedulerPolicy == NPPS) { 
 
-      int current_max_priority = 6; // The highest priority is '1' and the lowest priority is '6'
+      cprintf("We are Here!\n");
+
+      int current_max_priority = 7; // The highest priority is '1' and the lowest priority is '6'
       struct proc *selected_p;
+      struct proc *current_p;
       uint min_creationtime;
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
       {
-        if (p->state != RUNNABLE) 
+        cprintf("priority of Process is (%d), (%d)\n", p->priority, p->state);
+        cprintf("current max priority is (%d)\n", current_max_priority);
+
+        if (p->state != RUNNABLE) {
+          if (p->state == RUNNING) {
+            current_p = p;
+          }
           continue;
+        }
 
         // In this section, we find the max priority in ptable
-        if (p->priority < current_max_priority) {
+        if (p->priority <= current_max_priority) {
           current_max_priority = p->priority;
-        }
-        min_creationtime = p->creationTime;
-      }
-      
-      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-      {
-        if (p->state != RUNNABLE)
-          continue;
-
-        // This section, find the first process in the ptable that has the maximum priority
-        // and also, has created before any other processes with the same priority
-        if (p->priority == current_max_priority && p->creationTime < min_creationtime) {
           selected_p = p;
-          min_creationtime = p->creationTime;
+          cprintf("selected_p is priority (%d) and state (%d)\n", selected_p->priority, selected_p->state);
         }
+        // min_creationtime = p->creationTime;
       }
 
-      if (!(c->proc) && selected_p) {
-        // Switch to chosen process.  It is the process's job
-        // to release ptable.lock and then reacquire it
-        // before jumping back to us.
+      cprintf("After loop... (%d)\n", c->proc->pid);
+      
+      // for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+      // {
+      //   if (p->state != RUNNABLE)
+      //     continue;
+
+      //   // This section, find the first process in the ptable that has the maximum priority
+      //   // and also, has created before any other processes with the same priority
+      //   if (p->priority == current_max_priority) {
+      //     selected_p = p;
+      //     min_creationtime = p->creationTime;
+      //   }
+      // }
+
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+
+      if (selected_p) {
         c->proc = selected_p;
         switchuvm(selected_p);
         selected_p->state = RUNNING;
@@ -467,6 +489,20 @@ void scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+
+      } else if (current_p) {
+
+        c->proc = current_p;
+        switchuvm(current_p);
+        current_p->state = RUNNING;
+
+        swtch(&(c->scheduler), current_p->context);
+        switchkvm();
+
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+
       }
 
       release(&ptable.lock);
