@@ -110,7 +110,7 @@ int sys_thread_create(void)
   if(argint(0,&stack) < 0){
     return -1;
   }
-  return thread_create((void *) stack);
+  return thread_create((void *)stack);
 }
 
 int sys_thread_wait(void)
@@ -131,9 +131,25 @@ int sys_setPriority(void)
 int sys_setSchedulerPolicy(void)
 {
    int policy;
-  
+
   if(argint(0,&policy) < 0){
     return -1;
   }
   return setSchedulerPolicy((void *)policy);
 }
+int sys_printProcessTime(void){
+  printProcessTime();
+  return 0;
+}
+int sys_doSomeDummyWork(void)
+{
+  doSomeDummyWork();
+  return 0;
+}
+
+
+// int sys_waitWithPData(void){
+//   struct pData *data;
+//   argptr (0 , (void*)&data ,sizeof(*data));
+//   return waitWithPData(data);
+// }

@@ -17,6 +17,8 @@ struct
 
 struct spinlock thread_lock;
 
+struct spinlock printProcessTime_lock;
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -29,6 +31,7 @@ void pinit(void)
 {
   initlock(&ptable.lock, "ptable");
   initlock(&thread_lock, "thlock");
+  initlock(&printProcessTime_lock, "proccessTimeLock");
 }
 
 // Must be called with interrupts disabled
@@ -108,6 +111,13 @@ found:
   p->creationTime = ticks;
   p->readyTime = 0;
   p->runningTime = 0;
+  p->sleepingTime = 0;
+  p->terminationTime = 0;
+
+  // PHASE 3:
+  p->readyTime = 0;
+  p->runningTime = 0;
+  p->creationTime = 0;
   p->sleepingTime = 0;
   p->terminationTime = 0;
 
@@ -390,6 +400,14 @@ int wait(void)
         p->state = UNUSED;
         p->threads = -1;
         p->topOfStack = -1;
+
+        // PHASE 3:
+        p->readyTime = 0;
+        p->runningTime = 0;
+        p->creationTime = 0;
+        p->sleepingTime = 0;
+        p->terminationTime = 0;
+
         release(&ptable.lock);
         return pid;
       }
@@ -406,6 +424,77 @@ int wait(void)
     sleep(curproc, &ptable.lock); // DOC: wait-sleep
   }
 }
+
+
+// PHASE 3
+
+
+ 
+// this wait prints its child's time.
+// prints running time, sleeping time & ready time of its 
+// child when the child state is ZOMBIE(done its work)
+// int waitWithPData(struct pData *pdata)
+// {
+//   // struct pData *pdata = (struct pData *)data;
+//   cprintf("value of ready time: %d\n", pdata->readyTime);
+//   cprintf("========================================\n");
+
+//   struct proc *p;
+//   int havekids, pid;
+//   struct proc *curproc = myproc();
+
+//   acquire(&ptable.lock);
+//   for (;;)
+//   {
+//     // Scan through table looking for exited children.
+//     havekids = 0;
+//     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+//     {
+//       if (p->parent != curproc)
+//         continue;
+//       // NEW CODE ADDED
+//       if (p->threads < 0) // if p->threads is less than zero means that child is 'thread child' and we should NOT wait for him
+//         continue;
+//       havekids = 1;
+//       if (p->state == ZOMBIE)
+//       {
+//         // printProcessTime(p);
+//         // Found one.
+//         pid = p->pid;
+//         kfree(p->kstack);
+//         p->kstack = 0;
+//         freevm(p->pgdir);
+//         p->pid = 0;
+//         p->parent = 0;
+//         p->name[0] = 0;
+//         p->killed = 0;
+//         p->state = UNUSED;
+//         p->threads = -1;
+//         p->topOfStack = -1;
+
+//         // PHASE 3:
+//         p->readyTime = 0;
+//         p->runningTime = 0;
+//         p->creationTime = 0;
+//         p->sleepingTime = 0;
+//         p->terminationTime = 0;
+
+//         release(&ptable.lock);
+//         return pid;
+//       }
+//     }
+
+//     // No point waiting if we don't have any children.
+//     if (!havekids || curproc->killed)
+//     {
+//       release(&ptable.lock);
+//       return -1;
+//     }
+
+//     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+//     sleep(curproc, &ptable.lock); // DOC: wait-sleep
+//   }
+// }
 
 // PAGEBREAK: 42
 //  Per-CPU process scheduler.
@@ -429,107 +518,47 @@ void scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
 
-    // Implement Non-Preemptive Priority Scheduling
-    if (schedulerPolicy == NPPS) { 
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p->state != RUNNABLE)
+        continue;
 
-      cprintf("We are Here!\n");
+      if (schedulerPolicy == RR) {
+        int i = 0;
+        // for (;; i++)
+        for (; i < QUANTUM; i++)
+        {
+          if (p->state != RUNNABLE)
+            break;
 
-      int current_max_priority = 7; // The highest priority is '1' and the lowest priority is '6'
-      struct proc *selected_p;
-      struct proc *current_p;
-      uint min_creationtime;
-      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-      {
-        cprintf("priority of Process is (%d), (%d)\n", p->priority, p->state);
-        cprintf("current max priority is (%d)\n", current_max_priority);
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
 
-        if (p->state != RUNNABLE) {
-          if (p->state == RUNNING) {
-            current_p = p;
-          }
-          continue;
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
+
+          c->proc = 0;
         }
-
-        // In this section, we find the max priority in ptable
-        if (p->priority <= current_max_priority) {
-          current_max_priority = p->priority;
-          selected_p = p;
-          cprintf("selected_p is priority (%d) and state (%d)\n", selected_p->priority, selected_p->state);
-        }
-        // min_creationtime = p->creationTime;
+        continue;
       }
-
-      cprintf("After loop... (%d)\n", c->proc->pid);
       
-      // for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-      // {
-      //   if (p->state != RUNNABLE)
-      //     continue;
-
-      //   // This section, find the first process in the ptable that has the maximum priority
-      //   // and also, has created before any other processes with the same priority
-      //   if (p->priority == current_max_priority) {
-      //     selected_p = p;
-      //     min_creationtime = p->creationTime;
-      //   }
-      // }
-
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
 
-      if (selected_p) {
-        c->proc = selected_p;
-        switchuvm(selected_p);
-        selected_p->state = RUNNING;
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
 
-        swtch(&(c->scheduler), selected_p->context);
-        switchkvm();
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-
-      } else if (current_p) {
-
-        c->proc = current_p;
-        switchuvm(current_p);
-        current_p->state = RUNNING;
-
-        swtch(&(c->scheduler), current_p->context);
-        switchkvm();
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-
-      }
-
-      release(&ptable.lock);
-
-    } else {
-      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-      {
-        if (p->state != RUNNABLE)
-          continue;
-
-
-        // Switch to chosen process.  It is the process's job
-        // to release ptable.lock and then reacquire it
-        // before jumping back to us.
-        c->proc = p;
-        switchuvm(p);
-        p->state = RUNNING;
-
-        swtch(&(c->scheduler), p->context);
-        switchkvm();
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-      }
-      release(&ptable.lock);
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
     }
+
+    release(&ptable.lock);
   }
 }
 
@@ -861,6 +890,14 @@ int thread_wait(void)
         p->state = UNUSED;
         p->threads = -1;
         p->topOfStack = -1;
+
+        // PHASE 3:
+        p->readyTime = 0;
+        p->runningTime = 0;
+        p->creationTime = 0;
+        p->sleepingTime = 0;
+        p->terminationTime = 0;
+
         release(&ptable.lock);
         return pid;
       }
@@ -929,4 +966,54 @@ int setSchedulerPolicy(void *policy)
     cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
     return -1;
   }
+}
+
+void updateProccessTime()
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    switch (p->state)
+    {
+    case RUNNING:
+      p->runningTime++;
+      break;
+    case RUNNABLE:
+      p->readyTime++;
+      break;
+    case SLEEPING:
+      p->sleepingTime++;
+      break;
+    default:
+      break;
+    }
+  }
+  release(&ptable.lock);
+}
+
+void doSomeDummyWork(void)
+{
+  struct proc *curproc = myproc();
+
+  for (int i = 1; i < 100; i++)
+  {
+    acquire(&printProcessTime_lock);
+    cprintf("/PID = %d/ : /i = %d/\n", curproc->pid, i);
+    release(&printProcessTime_lock);
+  }
+}
+
+void printProcessTime(void)
+{
+  acquire(&printProcessTime_lock);
+  // PHASE 3
+  struct proc *curproc = myproc();
+
+  // cprintf("#### proccess: %d ######\n", curproc->pid);
+  cprintf("pid: %d -- ready time: %d\n", curproc->pid, curproc->readyTime);
+  cprintf("pid: %d -- running time: %d\n", curproc->pid, curproc->runningTime);
+  cprintf("pid: %d -- sleeping time: %d\n", curproc->pid, curproc->sleepingTime);
+  cprintf("########################\n");
+  release(&printProcessTime_lock);
 }

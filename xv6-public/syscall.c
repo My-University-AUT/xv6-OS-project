@@ -113,7 +113,13 @@ extern int sys_thread_wait(void);
 
 // PHASE 3
 extern int sys_setSchedulerPolicy(void);
+<<<<<<< HEAD
 extern int sys_setPriority(void);
+=======
+extern int sys_printProcessTime(void);
+extern int sys_doSomeDummyWork(void);
+// extern int sys_waitWithPData(void);
+>>>>>>> master
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -144,6 +150,9 @@ static int (*syscalls[])(void) = {
     [SYS_thread_wait] sys_thread_wait,
     [SYS_setSchedulerPolicy] sys_setSchedulerPolicy,
     [SYS_setPriority] sys_setPriority,
+    [SYS_printProcessTime] sys_printProcessTime,
+    [SYS_doSomeDummyWork] sys_doSomeDummyWork,
+    // [SYS_waitWithPData] sys_waitWithPData,
 };
 
 void syscall(void)
