@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
     struct pData *pdata_arr = malloc(num_of_children * sizeof(struct pData));
 
     int parent_pid = getpid();
-    for (int i = 0; i < num_of_children; i++)
+    int i;
+    for (i = 0; i < num_of_children; i++)
     {
         if (fork() == 0)
         {
@@ -41,14 +42,15 @@ int main(int argc, char *argv[])
 
     if (pid == parent_pid)
     {
-        for (int i = 0; i < num_of_children; i++)
+        int i;
+        for (i = 0; i < num_of_children; i++)
         {
-            // waitWithPData((void *)&pdata_arr[i]);
-            wait();
+            waitWithPData((void *)&pdata_arr[i]);
+            // wait();
         }
 
         printf(1, "after all the children are done:\n");
-        for (int i = 0; i < num_of_children; i++)
+        for ( i = 0; i < num_of_children; i++)
         {
             printf(1, "========================================\n");
             printf(1, "value of ready time: %d\n", pdata_arr[i].readyTime);

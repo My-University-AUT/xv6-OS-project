@@ -974,7 +974,8 @@ void doSomeDummyWork(void)
 {
   struct proc *curproc = myproc();
   int pid = curproc->pid;
-  for (int i = 1; i < 1000; i++)
+  int i;
+  for (i = 1; i < 1000; i++)
   {
     // acquire(&printProcessTime_lock);
     cprintf("/PID = %d/ : /i = %d/\n", pid, i);
