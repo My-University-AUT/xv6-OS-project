@@ -14,6 +14,7 @@ struct pData
     uint readyTime;
     uint runningTime;
     uint sleepingTime;
+    uint priority;
 };
 
 int main(int argc, char *argv[])
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
             printf(1, "value of ready time: %d\n", pdata_arr[i].readyTime);
             printf(1, "value of running time: %d\n", pdata_arr[i].runningTime);
             printf(1, "value of sleeping time: %d\n", pdata_arr[i].sleepingTime);
-            printf(1, "value of pid: %d\n", pdata_arr[i].pid);
+            printf(1, "value of pid: %d | priority: %d\n", pdata_arr[i].pid, pdata_arr[i].priority);
         }
 
         exit();
