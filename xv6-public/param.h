@@ -13,4 +13,4 @@
 #define FSSIZE       1000  // size of file system in blocks
 
 // PHASE 3
-#define QUANTUM 5
+#define QUANTUM 1

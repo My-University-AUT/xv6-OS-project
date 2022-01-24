@@ -566,8 +566,9 @@ void scheduler(void)
           continue;
 
         // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
-
-        for (;;)
+        int i;
+        // for (;;)
+        for (i=0; i < QUANTUM; i++)
         {
           if (p->state != RUNNABLE)
             break;
@@ -1048,11 +1049,12 @@ void doSomeDummyWork(int lineNum)
   release(&printProcessTime_lock);
   
   int pid = curproc->pid;
+  int priority = curproc->priority;
   int i;
   for (i = 1; i < lineNum; i++)
   {
     // acquire(&printProcessTime_lock);
-    cprintf("/PID = %d/ : /i = %d/\n", pid, i);
+    cprintf("/PID = %d/ : /priority = %d/ : /i = %d/\n", pid, priority, i);
     // release(&printProcessTime_lock);
   }
 }
