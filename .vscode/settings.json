@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.c": "c",
+        "defs.h": "c",
+        "proc.h": "c"
+    }
+}
