@@ -533,23 +533,16 @@ void scheduler(void)
            // means not started yet
             p->startingTime = ticks;
         }
-        int i = 0;
-        // for (;; i++)
-        for (; i < QUANTUM; i++)
-        {
-          if (p->state != RUNNABLE)
-            break;
 
-          c->proc = p;
-          switchuvm(p);
-          p->state = RUNNING;
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
 
-          swtch(&(c->scheduler), p->context);
-          switchkvm();
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
 
-          c->proc = 0;
-        }
-        continue;
+        c->proc = 0;
+        
       } else if (schedulerPolicy == NPPS) {
 
         struct proc * temp_p;
