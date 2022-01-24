@@ -2,7 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
-#define num_of_children 20
+#define num_of_children 30
 
 // process data
 struct pData
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     sleep(10);
     int pid = getpid();
 
-    doSomeDummyWork(20);
+    doSomeDummyWork(250);
 
     if (pid == parent_pid)
     {

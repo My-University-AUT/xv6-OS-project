@@ -542,46 +542,49 @@ void scheduler(void)
         switchkvm();
 
         c->proc = 0;
-        
+
       } else if (schedulerPolicy == NPPS) {
 
         struct proc * temp_p;
         int hasMaxPriority = 1;
+        int samePriorityNum = 0;
         for (temp_p = ptable.proc; temp_p < &ptable.proc[NPROC]; temp_p++) {
           
           if (temp_p->state == RUNNABLE && temp_p->priority < p->priority) {
             hasMaxPriority = 0;
             break;
           }
+
+          if (temp_p->state == RUNNABLE && temp_p->priority == p->priority) {
+            samePriorityNum++;
+          }
+          
         }
 
         if (!hasMaxPriority)
           continue;
 
+        if (samePriorityNum == 1)
+          isTimerIRQEnable = 0;
+        else
+          isTimerIRQEnable = 1;
+
         // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
-        int i;
-        // for (;;)
-        for (i=0; i < QUANTUM; i++)
-        {
-          if (p->state != RUNNABLE)
-            break;
 
-          if (p->startingTime == 0){
-            // means not started yet
-            p->startingTime = ticks;
-          }
-
-
-          c->proc = p;
-          switchuvm(p);
-          p->state = RUNNING;
-
-          swtch(&(c->scheduler), p->context);
-          switchkvm();
-
-          c->proc = 0;
+        if (p->startingTime == 0){
+          // means not started yet
+          p->startingTime = ticks;
         }
-        continue;
+
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+
+        c->proc = 0;
+
       }
 
       // Switch to chosen process.  It is the process's job
