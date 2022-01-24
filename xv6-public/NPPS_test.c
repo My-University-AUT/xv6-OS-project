@@ -9,6 +9,7 @@ struct pData
 {
     int pid;
     uint creationTime;
+    uint startingTime;
     uint terminationTime;
     uint readyTime;
     uint runningTime;
@@ -56,6 +57,7 @@ int main(int argc, char *argv[])
         {
             printf(1, "========================================\n");
             printf(1, "value of creation time: %d\n", pdata_arr[i].creationTime);
+            printf(1, "value of starting time: %d\n", pdata_arr[i].startingTime);
             printf(1, "value of termination time: %d\n", pdata_arr[i].terminationTime);
             printf(1, "value of ready time: %d\n", pdata_arr[i].readyTime);
             printf(1, "value of running time: %d\n", pdata_arr[i].runningTime);

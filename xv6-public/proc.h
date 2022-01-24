@@ -71,6 +71,7 @@ struct proc {
   uint priority;
 
   uint creationTime;
+  uint startingTime;
   uint sleepingTime;
   uint runningTime;
   uint readyTime;

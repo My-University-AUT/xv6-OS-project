@@ -110,6 +110,7 @@ found:
 
   // PHASE 3:
   p->creationTime = ticks;
+  p->startingTime = 0;
   p->readyTime = 0;
   p->runningTime = 0;
   p->sleepingTime = 0;
@@ -454,6 +455,7 @@ int waitWithPData(void *pdata)
       {
         // Found one.
         data->creationTime = p->creationTime;
+        data->startingTime = p->startingTime;
         data->terminationTime = p->terminationTime;
         data->runningTime = p->runningTime;
         data->sleepingTime = p->sleepingTime;
@@ -474,6 +476,7 @@ int waitWithPData(void *pdata)
         p->topOfStack = -1;
 
         // PHASE 3:
+        // TODO: remove below lines. it doesn't any effect
         p->readyTime = 0;
         p->runningTime = 0;
         p->creationTime = 0;
@@ -525,6 +528,11 @@ void scheduler(void)
         continue;
 
       if (schedulerPolicy == RR) {
+
+        if (p->startingTime == 0){
+           // means not started yet
+            p->startingTime = ticks;
+        }
         int i = 0;
         // for (;; i++)
         for (; i < QUANTUM; i++)
@@ -563,6 +571,12 @@ void scheduler(void)
         {
           if (p->state != RUNNABLE)
             break;
+
+          if (p->startingTime == 0){
+            // means not started yet
+            p->startingTime = ticks;
+          }
+
 
           c->proc = p;
           switchuvm(p);

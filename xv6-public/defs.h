@@ -140,6 +140,7 @@ void            doSomeDummyWork(int lineNum);
 struct pData {
    int pid;
    uint creationTime;
+   uint startingTime;
    uint terminationTime;
    uint readyTime;
    uint runningTime;
