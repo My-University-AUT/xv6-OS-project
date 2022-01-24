@@ -462,6 +462,7 @@ int waitWithPData(void *pdata)
         data->sleepingTime = p->sleepingTime;
         data->readyTime = p->readyTime;
         data->pid = p->pid;
+        data->priority = p->priority;
         
         pid = p->pid;
         kfree(p->kstack);

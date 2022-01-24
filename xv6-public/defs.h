@@ -142,6 +142,7 @@ struct pData {
    uint readyTime;
    uint runningTime;
    uint sleepingTime;
+   uint priority;
 };
 
 // int waitWithPData(struct pData *pdata);
