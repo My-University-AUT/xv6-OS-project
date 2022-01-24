@@ -9,6 +9,8 @@
 struct pData
 {
     int pid;
+    uint creationTime;
+    uint terminationTime;
     uint readyTime;
     uint runningTime;
     uint sleepingTime;
@@ -60,6 +62,8 @@ int main(int argc, char *argv[])
         for ( i = 0; i < num_of_children; i++)
         {
             printf(1, "========================================\n");
+            printf(1, "value of creation time: %d\n", pdata_arr[i].creationTime);
+            printf(1, "value of termination time: %d\n", pdata_arr[i].terminationTime);
             printf(1, "value of ready time: %d\n", pdata_arr[i].readyTime);
             printf(1, "value of running time: %d\n", pdata_arr[i].runningTime);
             printf(1, "value of sleeping time: %d\n", pdata_arr[i].sleepingTime);

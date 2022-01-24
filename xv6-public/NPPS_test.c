@@ -8,6 +8,8 @@
 struct pData
 {
     int pid;
+    uint creationTime;
+    uint terminationTime;
     uint readyTime;
     uint runningTime;
     uint sleepingTime;

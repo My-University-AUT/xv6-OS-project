@@ -139,6 +139,8 @@ void            doSomeDummyWork(int lineNum);
 // process data
 struct pData {
    int pid;
+   uint creationTime;
+   uint terminationTime;
    uint readyTime;
    uint runningTime;
    uint sleepingTime;

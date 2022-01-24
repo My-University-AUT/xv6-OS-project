@@ -108,18 +108,13 @@ found:
   p->topOfStack = -1;
   p->priority = 3;
 
+  // PHASE 3:
   p->creationTime = ticks;
   p->readyTime = 0;
   p->runningTime = 0;
   p->sleepingTime = 0;
   p->terminationTime = 0;
 
-  // PHASE 3:
-  p->readyTime = 0;
-  p->runningTime = 0;
-  p->creationTime = 0;
-  p->sleepingTime = 0;
-  p->terminationTime = 0;
 
   release(&ptable.lock);
 
@@ -361,6 +356,7 @@ void exit(void)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  curproc->terminationTime = ticks;
   sched();
   panic("zombie exit");
 }
@@ -457,7 +453,8 @@ int waitWithPData(void *pdata)
       if (p->state == ZOMBIE)
       {
         // Found one.
-
+        data->creationTime = p->creationTime;
+        data->terminationTime = p->terminationTime;
         data->runningTime = p->runningTime;
         data->sleepingTime = p->sleepingTime;
         data->readyTime = p->readyTime;
