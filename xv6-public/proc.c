@@ -530,7 +530,7 @@ void scheduler(void)
       if (schedulerPolicy == RR) {
         
         // In RR Timer Interrupt should be enabled
-        isTimerIRQEnable = 1;
+        isTimerIRQEnable[cpuid()] = 1;
 
         if (p->startingTime == 0){
            // means not started yet
@@ -573,9 +573,9 @@ void scheduler(void)
         // else Time Quantum should get disable to let the current
         // max priority process do its work without any preemption.
         if (samePriorityNum == 1)
-          isTimerIRQEnable = 0;
+          isTimerIRQEnable[cpuid()] = 0;
         else
-          isTimerIRQEnable = 1;
+          isTimerIRQEnable[cpuid()] = 1;
 
         // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
 

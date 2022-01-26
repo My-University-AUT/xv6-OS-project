@@ -21,7 +21,7 @@ extern int ncpu;
 // dynamic multi level queue (DMLQ)
 enum policies {RR, NPPS, PMLQ, DMLQ};
 enum policies schedulerPolicy ;
-int isTimerIRQEnable;
+int isTimerIRQEnable[NCPU];
 
 
 //PAGEBREAK: 17
