@@ -56,13 +56,13 @@ int main(int argc, char *argv[])
         for ( i = 0; i < num_of_children; i++)
         {
             printf(1, "========================================\n");
-            printf(1, "value of creation time: %d\n", pdata_arr[i].creationTime);
-            printf(1, "value of starting time: %d\n", pdata_arr[i].startingTime);
-            printf(1, "value of termination time: %d\n", pdata_arr[i].terminationTime);
-            printf(1, "value of ready time: %d\n", pdata_arr[i].readyTime);
-            printf(1, "value of running time: %d\n", pdata_arr[i].runningTime);
-            printf(1, "value of sleeping time: %d\n", pdata_arr[i].sleepingTime);
             printf(1, "value of pid: %d | priority: %d\n", pdata_arr[i].pid, pdata_arr[i].priority);
+            printf(1, "value of creation time: %d\n", pdata_arr[i].creationTime);
+            printf(1, "value of termination time: %d\n", pdata_arr[i].terminationTime);
+            printf(1,"-------------\n");
+            printf(1, "value of running time(CBT): %d\n", pdata_arr[i].runningTime);
+            printf(1, "value of waiting time: %d\n", pdata_arr[i].sleepingTime);
+            printf(1, "value of turnAroundTime(TAT): %d\n", pdata_arr[i].runningTime +  pdata_arr[i].readyTime + pdata_arr[i].sleepingTime);
         }
 
         exit();
