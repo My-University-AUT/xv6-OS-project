@@ -19,6 +19,8 @@ struct spinlock thread_lock;
 
 struct spinlock printProcessTime_lock;
 
+struct spinlock currentQuantum_lock;
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -32,6 +34,7 @@ void pinit(void)
   initlock(&ptable.lock, "ptable");
   initlock(&thread_lock, "thlock");
   initlock(&printProcessTime_lock, "proccessTimeLock");
+  initlock(&currentQuantum_lock, "currentQuantumLock");
 }
 
 // Must be called with interrupts disabled
@@ -307,6 +310,11 @@ int fork(void)
 
   np->state = RUNNABLE;
 
+  if (curproc->priority > 3) {
+    offset = ticks % (4 * QUANTUM);
+    yield();
+  }
+
   release(&ptable.lock);
 
   return pid;
@@ -576,6 +584,43 @@ void scheduler(void)
           isTimerIRQEnable[cpuid()] = 0;
         else
           isTimerIRQEnable[cpuid()] = 1;
+
+        // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
+
+        if (p->startingTime == 0){
+          // means not started yet
+          p->startingTime = ticks;
+        }
+
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+
+        c->proc = 0;
+
+      } else if (schedulerPolicy == PMLQ) {
+
+        struct proc * temp_p;
+        int hasMaxPriority = 1;
+        for (temp_p = ptable.proc; temp_p < &ptable.proc[NPROC]; temp_p++) {
+          
+          if (temp_p->state == RUNNABLE && temp_p->priority < p->priority) {
+            hasMaxPriority = 0;
+            break;
+          }
+          
+        }
+
+        if (!hasMaxPriority)
+          continue;
+
+        acquire(&currentQuantum_lock);
+        currentQuantum = (7 - p->priority) * QUANTUM;
+        release(&currentQuantum_lock);
+        // cprintf("currentQuantum is %d\n", currentQuantum);
 
         // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
 
@@ -1007,6 +1052,9 @@ int setSchedulerPolicy(void *policy)
   cprintf("default scheduler policy: %d\n", schedulerPolicy);
   if (*((int *)policy) >= 0 && *((int *)policy) <= 3)
   {
+    if (*((int *)policy) == 2)
+      currentQuantum = QUANTUM;
+
     schedulerPolicy = *((int *)policy);
     cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
     printPolicy();
