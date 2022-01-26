@@ -620,7 +620,7 @@ void scheduler(void)
         acquire(&currentQuantum_lock);
         currentQuantum = (7 - p->priority) * QUANTUM;
         release(&currentQuantum_lock);
-        cprintf("currentQuantum is %d\n", currentQuantum);
+        // cprintf("currentQuantum is %d\n", currentQuantum);
 
         // cprintf("the priority of current process(pid= %d) is (%d) and (%d)\n", p->pid,p->priority, hasMaxPriority);
 
@@ -1052,6 +1052,9 @@ int setSchedulerPolicy(void *policy)
   cprintf("default scheduler policy: %d\n", schedulerPolicy);
   if (*((int *)policy) >= 0 && *((int *)policy) <= 3)
   {
+    if (*((int *)policy) == 2)
+      currentQuantum = QUANTUM;
+
     schedulerPolicy = *((int *)policy);
     cprintf("after setting scheduler policy: %d\n", schedulerPolicy);
     printPolicy();
