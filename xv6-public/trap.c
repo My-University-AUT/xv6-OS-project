@@ -109,9 +109,17 @@ trap(struct trapframe *tf)
 
   if (isTimerIRQEnable[cpuid()])
     if(myproc() && myproc()->state == RUNNING &&
-      tf->trapno == T_IRQ0+IRQ_TIMER)
-      if (ticks % QUANTUM == 0)
-        yield();
+      tf->trapno == T_IRQ0+IRQ_TIMER) {
+      if (schedulerPolicy == PMLQ) {
+        if ((ticks) % currentQuantum == 0) {
+          yield();
+        }
+      } else {
+        if (ticks % QUANTUM == 0)
+          yield();
+      }
+    }
+      
     
 
 

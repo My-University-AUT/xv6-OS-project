@@ -22,6 +22,8 @@ extern int ncpu;
 enum policies {RR, NPPS, PMLQ, DMLQ};
 enum policies schedulerPolicy ;
 int isTimerIRQEnable[NCPU];
+int currentQuantum;
+int offset;
 
 
 //PAGEBREAK: 17
